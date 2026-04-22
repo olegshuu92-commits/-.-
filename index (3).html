@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ГРАНД ТАВИЛГА — Монголын Тэргүүний Тавилгын Үйлдвэр</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Syncopate:wght@400;700&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<style>
+  :root {
+    --cream: #f5efe6;
+    --warm-white: #faf7f2;
+    --dark: #1a1208;
+    --mid: #2d2010;
+    --gold: #c8a96e;
+    --gold-light: #e8c98e;
+    --wood: #8B5E3C;
+    --wood-light: #b8824f;
+    --text-muted: #6b5d4f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--dark);
+    color: var(--cream);
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: all 0.15s ease;
+    opacity: 0.6;
+  }
+
+  /* Loader */
+  #loader {
+    position: fixed; inset: 0;
+    background: var(--dark);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .loader-text {
+    font-family: 'Syncopate', sans-serif;
+    font-size: clamp(24px, 4vw, 48px);
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    overflow: hidden;
+  }
+  .loader-bar-wrap {
+    width: 200px; height: 1px;
+    background: rgba(200,169,110,0.2);
+    position: relative;
+  }
+  .loader-bar {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.05s linear;
+  }
+  .loader-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+  }
+
+  /* Navigation */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 1000;
+    padding: 28px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    mix-blend-mode: normal;
+  }
+  nav::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(26,18,8,0.9), transparent);
+    pointer-events: none;
+  }
+  .nav-logo {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    font-weight: 700;
+    position: relative;
+  }
+  .nav-links {
+    display: flex; gap: 40px;
+    list-style: none;
+    position: relative;
+  }
+  .nav-links a {
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cream);
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.3s, color 0.3s;
+  }
+  .nav-links a:hover { opacity: 1; color: var(--gold); }
+
+  /* Hero Section */
+  #hero {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  #canvas-container {
+    position: absolute; inset: 0;
+    z-index: 0;
+  }
+  canvas { display: block; }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 60px;
+    max-width: 700px;
+  }
+  .hero-eyebrow {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(56px, 8vw, 110px);
+    line-height: 0.95;
+    font-weight: 300;
+    margin-bottom: 32px;
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+  .hero-desc {
+    font-size: 15px;
+    line-height: 1.8;
+    color: rgba(245,239,230,0.65);
+    max-width: 420px;
+    margin-bottom: 48px;
+    opacity: 0;
+    transform: translateY(20px);
+    letter-spacing: 0.03em;
+  }
+  .hero-cta {
+    display: flex; gap: 20px; align-items: center;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  .btn-primary {
+    padding: 16px 40px;
+    background: var(--gold);
+    color: var(--dark);
+    font-family: 'Syncopate', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    border: none;
+    cursor: none;
+    transition: all 0.3s;
+    font-weight: 700;
+  }
+  .btn-primary:hover {
+    background: var(--gold-light);
+    transform: translateY(-2px);
+  }
+  .btn-secondary {
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--cream);
+    opacity: 0.6;
+    cursor: none;
+    display: flex; align-items: center; gap: 12px;
+    text-transform: uppercase;
+    transition: opacity 0.3s;
+  }
+  .btn-secondary:hover { opacity: 1; }
+  .btn-arrow {
+    width: 40px; height: 1px;
+    background: currentColor;
+    position: relative;
+    transition: width 0.3s;
+  }
+  .btn-arrow::after {
+    content: '';
+    position: absolute;
+    right: 0; top: -3px;
+    width: 6px; height: 6px;
+    border-right: 1px solid currentColor;
+    border-bottom: 1px solid currentColor;
+    transform: rotate(-45deg);
+  }
+  .btn-secondary:hover .btn-arrow { width: 60px; }
+
+  /* Scroll indicator */
+  .scroll-indicator {
+    position: absolute;
+    bottom: 40px; right: 60px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+  }
+  .scroll-line {
+    width: 1px; height: 60px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+  .scroll-text {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 8px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    writing-mode: vertical-rl;
+    opacity: 0.6;
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 1; transform: scaleY(1); }
+    50% { opacity: 0.3; transform: scaleY(0.5); }
+  }
+
+  /* Stats Bar */
+  #stats {
+    position: relative;
+    z-index: 2;
+    background: rgba(26,18,8,0.95);
+    border-top: 1px solid rgba(200,169,110,0.15);
+    border-bottom: 1px solid rgba(200,169,110,0.15);
+    padding: 40px 60px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .stat-item {
+    text-align: center;
+    padding: 20px;
+    border-right: 1px solid rgba(200,169,110,0.1);
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 56px;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .stat-label {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* Products Section */
+  #products {
+    padding: 140px 60px;
+    background: var(--warm-white);
+    color: var(--dark);
+  }
+  .section-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    margin-bottom: 80px;
+    align-items: end;
+  }
+  .section-eyebrow {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .section-eyebrow::before {
+    content: '';
+    width: 40px; height: 1px;
+    background: var(--gold);
+    display: block;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(40px, 5vw, 70px);
+    font-weight: 300;
+    line-height: 1.05;
+    color: var(--dark);
+  }
+  .section-title em { font-style: italic; color: var(--wood); }
+  .section-desc {
+    color: var(--text-muted);
+    line-height: 1.8;
+    font-size: 15px;
+    padding-top: 20px;
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+  .product-card {
+    position: relative;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    cursor: none;
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  .product-card-inner {
+    position: absolute; inset: 0;
+    background: var(--dark);
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .product-card:hover .product-card-inner { transform: scale(1.03); }
+  .product-bg {
+    position: absolute; inset: 0;
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .product-card:hover .product-bg { transform: scale(1.08); }
+
+  /* 3D furniture preview canvases */
+  .product-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+  }
+
+  .product-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(26,18,8,0.95) 0%, rgba(26,18,8,0.2) 50%, transparent 100%);
+    z-index: 1;
+    transition: opacity 0.4s;
+  }
+  .product-card:hover .product-overlay { opacity: 0.7; }
+  .product-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 32px;
+    z-index: 2;
+    transform: translateY(0);
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .product-category {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.8;
+  }
+  .product-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--cream);
+    margin-bottom: 4px;
+  }
+  .product-price {
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    color: var(--gold-light);
+    letter-spacing: 0.05em;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s 0.1s;
+  }
+  .product-card:hover .product-price {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (max-width: 768px) {
+    .product-price { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Process Section */
+  #process {
+    padding: 140px 60px;
+    background: var(--mid);
+    position: relative;
+    overflow: hidden;
+  }
+  #process::before {
+    content: 'ҮЙЛДВЭРЛЭЛ';
+    position: absolute;
+    font-family: 'Syncopate', sans-serif;
+    font-size: clamp(80px, 12vw, 180px);
+    font-weight: 700;
+    color: rgba(200,169,110,0.04);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    letter-spacing: 0.1em;
+    pointer-events: none;
+  }
+  .process-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 100px;
+    align-items: center;
+    margin-top: 80px;
+  }
+  .process-visual {
+    position: relative;
+    height: 500px;
+  }
+  #process-canvas {
+    width: 100%; height: 100%;
+    border-radius: 2px;
+  }
+  .process-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .process-step {
+    padding: 32px 0;
+    border-bottom: 1px solid rgba(200,169,110,0.1);
+    cursor: none;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: all 0.3s;
+  }
+  .process-step:hover { padding-left: 20px; }
+  .process-step-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    color: var(--gold);
+    margin-bottom: 8px;
+    opacity: 0.7;
+    letter-spacing: 0.2em;
+  }
+  .process-step-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--cream);
+    margin-bottom: 8px;
+  }
+  .process-step-desc {
+    font-size: 13px;
+    color: rgba(245,239,230,0.5);
+    line-height: 1.7;
+    letter-spacing: 0.03em;
+  }
+
+  /* Materials Section */
+  #materials {
+    padding: 140px 60px;
+    background: var(--dark);
+    position: relative;
+  }
+  .materials-header { margin-bottom: 80px; }
+  .materials-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  .material-card {
+    position: relative;
+    border: 1px solid rgba(200,169,110,0.1);
+    padding: 40px 32px;
+    transition: all 0.4s;
+    cursor: none;
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  .material-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(200,169,110,0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .material-card:hover::before { opacity: 1; }
+  .material-card:hover { border-color: rgba(200,169,110,0.3); transform: translateY(-8px); }
+  .material-icon {
+    width: 48px; height: 48px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .material-icon-inner {
+    width: 100%; height: 100%;
+    border: 1px solid var(--gold);
+    opacity: 0.6;
+    transition: all 0.3s;
+  }
+  .material-card:hover .material-icon-inner { opacity: 1; transform: rotate(45deg); }
+  .material-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--cream);
+    margin-bottom: 12px;
+  }
+  .material-desc {
+    font-size: 13px;
+    color: rgba(245,239,230,0.45);
+    line-height: 1.7;
+  }
+  .material-tag {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 4px 12px;
+    border: 1px solid rgba(200,169,110,0.3);
+    font-family: 'Syncopate', sans-serif;
+    font-size: 8px;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  /* Testimonial / Quote Section */
+  #quote {
+    padding: 140px 60px;
+    background: var(--cream);
+    color: var(--dark);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  #quote::before, #quote::after {
+    content: '"';
+    position: absolute;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 400px;
+    color: rgba(200,169,110,0.08);
+    line-height: 1;
+    font-weight: 700;
+    top: -60px;
+  }
+  #quote::before { left: 40px; }
+  #quote::after { right: 40px; content: '"'; }
+  .quote-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 300;
+    line-height: 1.3;
+    max-width: 900px;
+    margin: 0 auto 40px;
+    color: var(--dark);
+    position: relative;
+    z-index: 1;
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  .quote-author {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+    opacity: 0;
+  }
+
+  /* Contact/CTA */
+  #contact {
+    padding: 140px 60px;
+    background: var(--dark);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .contact-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(40px, 5vw, 72px);
+    font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: 24px;
+  }
+  .contact-title em { font-style: italic; color: var(--gold); }
+  .contact-desc {
+    color: rgba(245,239,230,0.5);
+    font-size: 15px;
+    line-height: 1.8;
+    margin-bottom: 48px;
+  }
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .form-field {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(200,169,110,0.2);
+    padding: 16px 0;
+    color: var(--cream);
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 200;
+    letter-spacing: 0.05em;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  .form-field::placeholder { color: rgba(245,239,230,0.3); }
+  .form-field:focus { border-color: var(--gold); }
+  .form-submit {
+    margin-top: 16px;
+    padding: 18px 48px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Syncopate', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: none;
+    align-self: flex-start;
+    transition: all 0.3s;
+    font-weight: 700;
+  }
+  .form-submit:hover {
+    background: var(--gold);
+    color: var(--dark);
+  }
+
+  /* Footer */
+  footer {
+    padding: 48px 60px;
+    border-top: 1px solid rgba(200,169,110,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--dark);
+  }
+  .footer-logo {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .footer-copy {
+    font-size: 12px;
+    color: rgba(245,239,230,0.3);
+    letter-spacing: 0.1em;
+  }
+  .footer-links {
+    display: flex; gap: 32px;
+    list-style: none;
+  }
+  .footer-links a {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: rgba(245,239,230,0.4);
+    text-decoration: none;
+    transition: color 0.3s;
+    text-transform: uppercase;
+  }
+  .footer-links a:hover { color: var(--gold); }
+
+  /* Floating particles canvas */
+  #particles-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.3;
+  }
+
+  /* Mobile hamburger */
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+    padding: 4px;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 24px; height: 1px;
+    background: var(--gold);
+    transition: all 0.3s;
+  }
+  .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
+
+  /* Mobile menu overlay */
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,18,8,0.98);
+    z-index: 900;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .mobile-menu.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .mobile-menu a {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--cream);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    transition: color 0.3s;
+  }
+  .mobile-menu a:hover { color: var(--gold); }
+
+  /* ── TABLET (≤1024px) ── */
+  @media (max-width: 1024px) {
+    nav { padding: 20px 32px; }
+    .hero-content { padding: 0 32px; }
+    #stats { padding: 32px; grid-template-columns: repeat(2, 1fr); }
+    #products { padding: 80px 32px; }
+    .products-grid { grid-template-columns: repeat(2, 1fr); }
+    .section-header { grid-template-columns: 1fr; gap: 24px; }
+    .process-grid { grid-template-columns: 1fr; }
+    .process-visual { height: 360px; }
+    .materials-grid { grid-template-columns: repeat(2, 1fr); }
+    #contact { grid-template-columns: 1fr; gap: 48px; padding: 80px 32px; }
+    footer { flex-direction: column; gap: 24px; text-align: center; padding: 40px 32px; }
+    #process { padding: 80px 32px; }
+    #materials { padding: 80px 32px; }
+    #quote { padding: 80px 32px; }
+  }
+
+  /* ── MOBILE (≤768px) ── */
+  @media (max-width: 768px) {
+    /* cursor숨기기 on touch */
+    .cursor, .cursor-ring { display: none; }
+    body { cursor: auto; }
+    .btn-primary, .btn-secondary, .form-submit { cursor: pointer; }
+
+    /* Nav */
+    nav { padding: 18px 24px; }
+    .nav-links { display: none; }
+    .nav-toggle { display: flex; }
+    .mobile-menu { display: flex; }
+    .nav-logo { font-size: 14px; letter-spacing: 0.2em; }
+
+    /* Hero */
+    .hero-content {
+      padding: 0 24px;
+      max-width: 100%;
+    }
+    .hero-eyebrow {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      margin-bottom: 16px;
+    }
+    .hero-title {
+      font-size: clamp(44px, 12vw, 72px);
+      line-height: 1.0;
+      margin-bottom: 20px;
+    }
+    .hero-desc {
+      font-size: 14px;
+      margin-bottom: 32px;
+      max-width: 100%;
+    }
+    .hero-cta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .btn-primary {
+      padding: 14px 32px;
+      font-size: 9px;
+      width: 100%;
+      text-align: center;
+    }
+    .btn-secondary { font-size: 11px; }
+    .scroll-indicator { display: none; }
+
+    /* Stats */
+    #stats {
+      padding: 24px 20px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0;
+    }
+    .stat-item { padding: 20px 12px; }
+    .stat-num { font-size: 38px; }
+    .stat-label { font-size: 8px; letter-spacing: 0.15em; }
+
+    /* Products */
+    #products { padding: 60px 20px; }
+    .section-header { margin-bottom: 40px; }
+    .products-grid {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .product-card { aspect-ratio: 4/3; }
+    .product-info { padding: 20px; }
+    .product-name { font-size: 22px; }
+    .product-price { opacity: 1; transform: none; }
+
+    /* Process */
+    #process { padding: 60px 20px; }
+    .process-grid {
+      grid-template-columns: 1fr;
+      gap: 40px;
+      margin-top: 40px;
+    }
+    .process-visual { height: 280px; }
+    .process-step { padding: 24px 0; }
+    .process-step:hover { padding-left: 0; }
+    .process-step-title { font-size: 22px; }
+
+    /* Materials */
+    #materials { padding: 60px 20px; }
+    .materials-header { margin-bottom: 40px; }
+    .materials-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .material-card { padding: 24px 20px; }
+    .material-card:hover { transform: none; }
+    .material-name { font-size: 18px; }
+    .material-desc { font-size: 12px; }
+
+    /* Quote */
+    #quote { padding: 60px 24px; }
+    #quote::before, #quote::after { font-size: 200px; top: -20px; }
+    .quote-text { font-size: clamp(22px, 6vw, 36px); }
+
+    /* Contact */
+    #contact { padding: 60px 20px; grid-template-columns: 1fr; gap: 40px; }
+    .contact-desc { margin-bottom: 32px; font-size: 14px; }
+    .form-submit { width: 100%; text-align: center; padding: 16px 32px; }
+
+    /* Footer */
+    footer {
+      flex-direction: column;
+      gap: 20px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .footer-links { gap: 20px; flex-wrap: wrap; justify-content: center; }
+  }
+
+  /* ── SMALL MOBILE (≤480px) ── */
+  @media (max-width: 480px) {
+    .hero-title { font-size: clamp(38px, 11vw, 56px); }
+    .materials-grid { grid-template-columns: 1fr; }
+    #stats { grid-template-columns: repeat(2, 1fr); }
+    .stat-num { font-size: 32px; }
+    .products-grid { grid-template-columns: 1fr; }
+    .product-card { aspect-ratio: 1/1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Loader -->
+<div id="loader">
+  <div class="loader-text">ГРАНД ТАВИЛГА</div>
+  <div class="loader-bar-wrap">
+    <div class="loader-bar" id="loaderBar"></div>
+  </div>
+  <div class="loader-num" id="loaderNum">0%</div>
+</div>
+
+<!-- Particles -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-logo">ГРАНД ТАВИЛГА</div>
+  <ul class="nav-links">
+    <li><a href="#products">Бүтээгдэхүүн</a></li>
+    <li><a href="#process">Үйлдвэрлэл</a></li>
+    <li><a href="#materials">Материал</a></li>
+    <li><a href="#contact">Холбоо барих</a></li>
+  </ul>
+  <div class="nav-toggle" id="navToggle">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#products" class="mob-link">Бүтээгдэхүүн</a>
+  <a href="#process" class="mob-link">Үйлдвэрлэл</a>
+  <a href="#materials" class="mob-link">Материал</a>
+  <a href="#contact" class="mob-link">Холбоо барих</a>
+</div>
+
+<!-- Hero -->
+<section id="hero">
+  <div id="canvas-container">
+    <canvas id="hero-canvas"></canvas>
+  </div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Монголын тэргүүний тавилгын үйлдвэр</div>
+    <h1 class="hero-title">Урлаг ба<br><em>Чанарын</em><br>Нэгдэл</h1>
+    <p class="hero-desc">1998 оноос хойш бид байгалийн мод, гар урлалыг орчин үеийн дизайнтай хослуулан, танай гэрийг гоёмсог болгохоор ажиллаж байна.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Бүтээгдэхүүн үзэх</button>
+      <a class="btn-secondary" href="#process">
+        <span class="btn-arrow"></span>
+        Манай үйлдвэр
+      </a>
+    </div>
+  </div>
+  <div class="scroll-indicator" id="scrollInd">
+    <span class="scroll-text">Доош гүй</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section id="stats">
+  <div class="stat-item">
+    <span class="stat-num" data-target="26">0</span>
+    <span class="stat-label">Жилийн туршлага</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" data-target="15000">0</span>
+    <span class="stat-label">Хийгдсэн тавилга</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" data-target="4800">0</span>
+    <span class="stat-label">Хэрэглэгч</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" data-target="12">0</span>
+    <span class="stat-label">Олон улсын тэмцээн дэх шагнал</span>
+  </div>
+</section>
+
+<!-- Products -->
+<section id="products">
+  <div class="section-header">
+    <div>
+      <div class="section-eyebrow">Бүтээгдэхүүний цуглуулга</div>
+      <h2 class="section-title">Онцгой<br><em>Дизайн</em> —<br>Таны хэрэгцээнд</h2>
+    </div>
+    <p class="section-desc">Байгалийн нарс, хайлаас, болон импортын модноос гаргасан тавилгын бүрэн цуглуулга. Сонгодог болон орчин үеийн загвар — бүгд нэг дор.</p>
+  </div>
+  <div class="products-grid">
+    <div class="product-card">
+      <canvas class="product-canvas" id="chair-canvas"></canvas>
+      <div class="product-overlay"></div>
+      <div class="product-info">
+        <div class="product-category">Суудал</div>
+        <div class="product-name">Хара Мод сандал</div>
+        <div class="product-price">₮ 280,000 — ₮ 450,000</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <canvas class="product-canvas" id="table-canvas"></canvas>
+      <div class="product-overlay"></div>
+      <div class="product-info">
+        <div class="product-category">Ширээ</div>
+        <div class="product-name">Валиан хоолны ширээ</div>
+        <div class="product-price">₮ 680,000 — ₮ 1,200,000</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <canvas class="product-canvas" id="shelf-canvas"></canvas>
+      <div class="product-overlay"></div>
+      <div class="product-info">
+        <div class="product-category">Тавиур</div>
+        <div class="product-name">Ховор модон тавиур</div>
+        <div class="product-price">₮ 390,000 — ₮ 720,000</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Process -->
+<section id="process">
+  <div class="section-eyebrow" style="color:var(--gold)">Манай арга</div>
+  <h2 class="section-title" style="color:var(--cream); font-size:clamp(40px,5vw,70px); font-family:'Cormorant Garamond',serif; font-weight:300; margin-top:16px;">Үйлдвэрлэлийн<br><em style="color:var(--gold-light)">Нарийн Аргачлал</em></h2>
+  <div class="process-grid">
+    <div class="process-visual">
+      <canvas id="process-canvas"></canvas>
+    </div>
+    <div class="process-steps">
+      <div class="process-step">
+        <div class="process-step-num">— 01</div>
+        <div class="process-step-title">Мод сонгох</div>
+        <div class="process-step-desc">Байгалийн ойгоос тусгайлан сонгосон, насжилт дэй хатаасан өндөр чанарын мод ашигладаг.</div>
+      </div>
+      <div class="process-step">
+        <div class="process-step-num">— 02</div>
+        <div class="process-step-title">Гар дизайн</div>
+        <div class="process-step-desc">Туршлагатай уран бүтээлчид тус бүр дизайныг гар аргаар зурж, хэмжилт тогтоодог.</div>
+      </div>
+      <div class="process-step">
+        <div class="process-step-num">— 03</div>
+        <div class="process-step-title">Нарийн боловсруулалт</div>
+        <div class="process-step-desc">Орчин үеийн CNC машин болон уран дархчдын гар хосолсон боловсруулалт хийнэ.</div>
+      </div>
+      <div class="process-step">
+        <div class="process-step-num">— 04</div>
+        <div class="process-step-title">Чанарын шалгалт</div>
+        <div class="process-step-desc">Хүрэлт, тэсвэр, гоо зүйн 14 шат бүхий шалгалтыг давсны дараа хэрэглэгчид хүргэнэ.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Materials -->
+<section id="materials">
+  <div class="materials-header">
+    <div class="section-eyebrow" style="color:var(--gold)">Түүхий эд</div>
+    <h2 class="section-title" style="font-size:clamp(40px,5vw,70px);">Байгалийн<br><em>Эрдэнэс</em></h2>
+  </div>
+  <div class="materials-grid">
+    <div class="material-card">
+      <div class="material-icon"><div class="material-icon-inner"></div></div>
+      <div class="material-name">Хайлаас мод</div>
+      <div class="material-desc">Монгол хайлаасны хатуулаг болон гоо сайхан хосолсон дотоодын тэргүүний материал.</div>
+      <div class="material-tag">Дотоодын</div>
+    </div>
+    <div class="material-card">
+      <div class="material-icon"><div class="material-icon-inner" style="border-radius:50%;"></div></div>
+      <div class="material-name">Хус мод</div>
+      <div class="material-desc">Цайвар өнгөлгөө, чийгэнд тэсвэртэй хус модыг орчин үеийн дизайнд ашиглана.</div>
+      <div class="material-tag">Дотоодын</div>
+    </div>
+    <div class="material-card">
+      <div class="material-icon"><div class="material-icon-inner" style="clip-path:polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></div></div>
+      <div class="material-name">Валиан мод</div>
+      <div class="material-desc">Онцгой хатуулаг, хөнгөн жин, аялгуу өнгө — импортын тэргүүний сонголт.</div>
+      <div class="material-tag">Импортын</div>
+    </div>
+    <div class="material-card">
+      <div class="material-icon"><div class="material-icon-inner" style="border-radius:0 50% 50% 50%;"></div></div>
+      <div class="material-name">Арьс, даавуу</div>
+      <div class="material-desc">Итали арьс болон органик даавуугаар дотоодыг нь бүтээн, тав тухыг нэмэгдүүлнэ.</div>
+      <div class="material-tag">Нэмэлт</div>
+    </div>
+  </div>
+</section>
+
+<!-- Quote -->
+<section id="quote">
+  <div class="quote-text">"Тавилга бол зүгээр л гэрийн эд хогшил биш — энэ бол таны амьдралын хэв маягийн илэрхийлэл."</div>
+  <div class="quote-author">— Ж.Гантулга, Үүсгэн байгуулагч</div>
+</section>
+
+<!-- Contact -->
+<section id="contact">
+  <div>
+    <h2 class="contact-title">Биднийг<br>хүлээж <em>байна</em></h2>
+    <p class="contact-desc">Тавилга захиалах, зөвлөгөө авах, эсвэл үйлдвэрийг биеэр үзэхийн тулд холбогдоорой. Бид танд тохирсон шийдлийг олж өгнө.</p>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div style="font-family:'Syncopate',sans-serif;font-size:10px;letter-spacing:0.2em;color:var(--gold);">ХАЯГ</div>
+      <div style="font-size:14px;color:rgba(245,239,230,0.6);line-height:1.8;">Улаанбаатар хот, Хан-Уул дүүрэг<br>Зайсангийн гудамж 15</div>
+      <div style="font-family:'Syncopate',sans-serif;font-size:10px;letter-spacing:0.2em;color:var(--gold);margin-top:16px;">УТАС</div>
+      <div style="font-size:14px;color:rgba(245,239,230,0.6);">+976 9911-2233</div>
+    </div>
+  </div>
+  <div class="contact-form">
+    <input type="text" class="form-field" placeholder="Таны нэр">
+    <input type="email" class="form-field" placeholder="И-мэйл хаяг">
+    <input type="tel" class="form-field" placeholder="Утасны дугаар">
+    <textarea class="form-field" rows="4" placeholder="Захиалга эсвэл асуулт..." style="resize:none;"></textarea>
+    <button class="form-submit">Илгээх</button>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">ГРАНД ТАВИЛГА</div>
+  <ul class="footer-links">
+    <li><a href="#">Instagram</a></li>
+    <li><a href="#">Facebook</a></li>
+    <li><a href="#">Kakaotalk</a></li>
+  </ul>
+  <div class="footer-copy">© 2024 Гранд Тавилга ХХК. Бүх эрх хуулиар хамгаалагдсан.</div>
+</footer>
+
+<script>
+// ============ MOBILE MENU ============
+const navToggle = document.getElementById('navToggle');
+const mobileMenu = document.getElementById('mobileMenu');
+navToggle.addEventListener('click', () => {
+  navToggle.classList.toggle('open');
+  mobileMenu.classList.toggle('open');
+  document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+});
+document.querySelectorAll('.mob-link').forEach(link => {
+  link.addEventListener('click', () => {
+    navToggle.classList.remove('open');
+    mobileMenu.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+});
+
+// ============ CURSOR (desktop only) ============
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+if (!isTouchDevice) {
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx - 4 + 'px';
+    cursor.style.top = my - 4 + 'px';
+  });
+  function animRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx - 18 + 'px';
+    ring.style.top = ry - 18 + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+} else {
+  cursor.style.display = 'none';
+  ring.style.display = 'none';
+}
+
+document.querySelectorAll('a, button, .product-card, .material-card, .process-step').forEach(el => {
+  el.addEventListener('mouseenter', () => { ring.style.transform = 'scale(2)'; ring.style.opacity = '1'; });
+  el.addEventListener('mouseleave', () => { ring.style.transform = 'scale(1)'; ring.style.opacity = '0.6'; });
+});
+
+// ============ LOADER ============
+const bar = document.getElementById('loaderBar');
+const num = document.getElementById('loaderNum');
+let prog = 0;
+const loadInterval = setInterval(() => {
+  prog += Math.random() * 4 + 1;
+  if (prog >= 100) {
+    prog = 100;
+    clearInterval(loadInterval);
+    setTimeout(() => {
+      gsap.to('#loader', { opacity: 0, duration: 0.8, onComplete: () => {
+        document.getElementById('loader').style.display = 'none';
+        initAnimations();
+      }});
+    }, 400);
+  }
+  bar.style.width = prog + '%';
+  num.textContent = Math.floor(prog) + '%';
+}, 40);
+
+// ============ PARTICLES ============
+const pCanvas = document.getElementById('particles-canvas');
+const pCtx = pCanvas.getContext('2d');
+pCanvas.width = window.innerWidth;
+pCanvas.height = window.innerHeight;
+
+const particles = Array.from({length: 60}, () => ({
+  x: Math.random() * pCanvas.width,
+  y: Math.random() * pCanvas.height,
+  vx: (Math.random() - 0.5) * 0.3,
+  vy: (Math.random() - 0.5) * 0.3,
+  size: Math.random() * 1.5 + 0.3,
+  alpha: Math.random() * 0.4 + 0.1
+}));
+
+function drawParticles() {
+  pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = pCanvas.width;
+    if (p.x > pCanvas.width) p.x = 0;
+    if (p.y < 0) p.y = pCanvas.height;
+    if (p.y > pCanvas.height) p.y = 0;
+    pCtx.beginPath();
+    pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    pCtx.fillStyle = `rgba(200,169,110,${p.alpha})`;
+    pCtx.fill();
+  });
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+window.addEventListener('resize', () => {
+  pCanvas.width = window.innerWidth;
+  pCanvas.height = window.innerHeight;
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+});
+
+// ============ THREE.JS HERO ============
+function initHero() {
+  const canvas = document.getElementById('hero-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const container = document.getElementById('canvas-container');
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera.position.set(4, 3, 8);
+  camera.lookAt(0, 0.5, 0);
+
+  // Lighting
+  const ambient = new THREE.AmbientLight(0x2d1a0a, 1.5);
+  scene.add(ambient);
+  const spot1 = new THREE.SpotLight(0xc8a96e, 3, 20, Math.PI/6, 0.5);
+  spot1.position.set(5, 8, 5);
+  spot1.castShadow = true;
+  scene.add(spot1);
+  const spot2 = new THREE.SpotLight(0xe8c98e, 1.5, 15, Math.PI/5, 0.8);
+  spot2.position.set(-6, 6, -3);
+  scene.add(spot2);
+  const fill = new THREE.PointLight(0x4a2800, 1, 20);
+  fill.position.set(-3, 2, 6);
+  scene.add(fill);
+
+  // Materials
+  const woodMat = new THREE.MeshPhongMaterial({ color: 0x6b3d1e, shininess: 30, specular: 0x3a2010 });
+  const darkWoodMat = new THREE.MeshPhongMaterial({ color: 0x3d1f0a, shininess: 20 });
+  const cushionMat = new THREE.MeshPhongMaterial({ color: 0x1a1208, shininess: 5 });
+  const goldMat = new THREE.MeshPhongMaterial({ color: 0xc8a96e, shininess: 100, specular: 0xffd080 });
+  const floorMat = new THREE.MeshPhongMaterial({ color: 0x0d0905, shininess: 5 });
+
+  // Floor
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -0.01;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // ---- BUILD CHAIR ----
+  const chairGroup = new THREE.Group();
+  // Seat
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 1.1), woodMat);
+  seat.position.y = 0.9; seat.castShadow = true; chairGroup.add(seat);
+  // Cushion
+  const cushion = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.12, 0.9), cushionMat);
+  cushion.position.y = 1.02; cushion.castShadow = true; chairGroup.add(cushion);
+  // Backrest
+  const back = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.9, 0.08), woodMat);
+  back.position.set(0, 1.4, -0.52); back.castShadow = true; chairGroup.add(back);
+  // Back cushion
+  const backCush = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.75, 0.08), cushionMat);
+  backCush.position.set(0, 1.4, -0.48); backCush.castShadow = true; chairGroup.add(backCush);
+  // Legs
+  [[0.5, -0.5], [0.5, 0.4], [-0.5, -0.5], [-0.5, 0.4]].forEach(([x, z]) => {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.9), darkWoodMat);
+    leg.position.set(x, 0.45, z); leg.castShadow = true; chairGroup.add(leg);
+  });
+  // Arm rests
+  [-0.62, 0.62].forEach(x => {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.7), woodMat);
+    arm.position.set(x, 1.2, -0.1); arm.castShadow = true; chairGroup.add(arm);
+    const armPole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.3), darkWoodMat);
+    armPole.position.set(x, 1.05, -0.1); armPole.castShadow = true; chairGroup.add(armPole);
+  });
+  scene.add(chairGroup);
+  chairGroup.position.set(0.3, 0, 0);
+
+  // ---- BUILD TABLE ----
+  const tableGroup = new THREE.Group();
+  tableGroup.position.set(-1.8, 0, -1);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.09, 1.1), woodMat);
+  top.position.y = 1.4; top.castShadow = true; tableGroup.add(top);
+  // Table edge detail
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(2.24, 0.03, 1.14), goldMat);
+  edge.position.y = 1.365; tableGroup.add(edge);
+  // Table legs
+  [[0.9, 0.4], [0.9, -0.4], [-0.9, 0.4], [-0.9, -0.4]].forEach(([x, z]) => {
+    const tleg = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.4, 0.07), darkWoodMat);
+    tleg.position.set(x, 0.7, z); tleg.castShadow = true; tableGroup.add(tleg);
+  });
+  // Cross bar
+  const xbar = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.05, 0.05), darkWoodMat);
+  xbar.position.set(0, 0.4, 0); tableGroup.add(xbar);
+  scene.add(tableGroup);
+
+  // ---- FLOATING PARTICLES in 3D ----
+  const geoP = new THREE.BufferGeometry();
+  const posArr = new Float32Array(300 * 3);
+  for (let i = 0; i < 300 * 3; i++) posArr[i] = (Math.random() - 0.5) * 14;
+  geoP.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+  const matP = new THREE.PointsMaterial({ color: 0xc8a96e, size: 0.04, transparent: true, opacity: 0.35 });
+  scene.add(new THREE.Points(geoP, matP));
+
+  let t = 0;
+  let mouseMoveX = 0, mouseMoveY = 0;
+  window.addEventListener('mousemove', e => {
+    mouseMoveX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseMoveY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  function animHero() {
+    requestAnimationFrame(animHero);
+    t += 0.008;
+    chairGroup.rotation.y = Math.sin(t * 0.4) * 0.15 + mouseMoveX * 0.08;
+    chairGroup.position.y = Math.sin(t * 0.6) * 0.04;
+    tableGroup.rotation.y = Math.sin(t * 0.3 + 1) * 0.1 - mouseMoveX * 0.05;
+    camera.position.x = 4 + mouseMoveX * 0.5;
+    camera.position.y = 3 + mouseMoveY * -0.3;
+    camera.lookAt(0, 0.8, 0);
+    spot1.position.x = 5 + Math.sin(t * 0.5) * 2;
+    renderer.render(scene, camera);
+  }
+  animHero();
+
+  window.addEventListener('resize', () => {
+    const w = container.clientWidth, h = container.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+}
+
+// ============ PRODUCT CANVASES ============
+function initProductCanvas(canvasId, shape) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x110b05);
+
+  const camera = new THREE.PerspectiveCamera(50, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.1, 100);
+  camera.position.set(3, 2.5, 4);
+  camera.lookAt(0, 0.8, 0);
+
+  const ambient = new THREE.AmbientLight(0x2d1a0a, 2);
+  scene.add(ambient);
+  const key = new THREE.SpotLight(0xc8a96e, 4, 20, Math.PI/5, 0.6);
+  key.position.set(4, 7, 5); key.castShadow = true;
+  scene.add(key);
+  const fill2 = new THREE.SpotLight(0xe8d5b0, 2, 15, Math.PI/4, 1);
+  fill2.position.set(-5, 4, 3);
+  scene.add(fill2);
+
+  const wood = new THREE.MeshPhongMaterial({ color: 0x7a4820, shininess: 40, specular: 0x4a2810 });
+  const dark = new THREE.MeshPhongMaterial({ color: 0x3a200a, shininess: 15 });
+  const cushion2 = new THREE.MeshPhongMaterial({ color: 0x1e130a, shininess: 3 });
+  const gold2 = new THREE.MeshPhongMaterial({ color: 0xc8a96e, shininess: 120, specular: 0xffe090 });
+
+  const group = new THREE.Group();
+
+  if (shape === 'chair') {
+    // Elegant chair
+    const s = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.12, 1.0), wood);
+    s.position.y = 0.85; group.add(s);
+    const c = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.14, 0.88), cushion2);
+    c.position.y = 0.98; group.add(c);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.8, 0.1), wood);
+    b.position.set(0, 1.3, -0.48); group.add(b);
+    [[0.45, 0.38], [0.45, -0.38], [-0.45, 0.38], [-0.45, -0.38]].forEach(([x,z]) => {
+      const l = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.85), dark);
+      l.position.set(x, 0.42, z); group.add(l);
+    });
+
+  } else if (shape === 'table') {
+    const tp = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.3), wood);
+    tp.position.y = 1.3; group.add(tp);
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(2.45, 0.04, 1.35), gold2);
+    rim.position.y = 1.27; group.add(rim);
+    [[1.0, 0.5], [1.0, -0.5], [-1.0, 0.5], [-1.0, -0.5]].forEach(([x,z]) => {
+      const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.08), dark);
+      l.position.set(x, 0.65, z); group.add(l);
+    });
+    const xb = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.06, 0.06), dark);
+    xb.position.set(0, 0.35, 0); group.add(xb);
+
+  } else if (shape === 'shelf') {
+    // Bookshelf
+    const panels = [
+      { y: 1.8, gy: 0 }, { y: 1.2, gy: 0 }, { y: 0.6, gy: 0 }, { y: 0.05, gy: 0 }
+    ];
+    panels.forEach(p => {
+      const sh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.07, 0.45), wood);
+      sh.position.y = p.y; group.add(sh);
+    });
+    [-0.9, 0.9].forEach(x => {
+      const side = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.85, 0.45), dark);
+      side.position.set(x, 0.93, 0); group.add(side);
+    });
+    const back2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.85, 0.04), dark);
+    back2.position.set(0, 0.93, -0.21); group.add(back2);
+    // Decorative items
+    const bookColors = [0x8b2020, 0x1a4a8b, 0x2a6b2a];
+    bookColors.forEach((col, i) => {
+      const bk = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.45, 0.38), new THREE.MeshPhongMaterial({color:col, shininess:10}));
+      bk.position.set(-0.6 + i * 0.32, 1.5, 0); group.add(bk);
+    });
+  }
+
+  scene.add(group);
+
+  // Floating particles
+  const pgeo = new THREE.BufferGeometry();
+  const ppos = new Float32Array(100 * 3);
+  for (let i = 0; i < 300; i++) ppos[i] = (Math.random() - 0.5) * 8;
+  pgeo.setAttribute('position', new THREE.BufferAttribute(ppos, 3));
+  scene.add(new THREE.Points(pgeo, new THREE.PointsMaterial({ color: 0xc8a96e, size: 0.03, transparent: true, opacity: 0.25 })));
+
+  let ti = 0;
+  let hovering = false;
+  canvas.parentElement.addEventListener('mouseenter', () => hovering = true);
+  canvas.parentElement.addEventListener('mouseleave', () => hovering = false);
+
+  function anim() {
+    requestAnimationFrame(anim);
+    ti += hovering ? 0.02 : 0.006;
+    group.rotation.y = Math.sin(ti * 0.5) * 0.4 + (hovering ? Math.PI * 0.15 : 0);
+    group.position.y = Math.sin(ti * 0.8) * 0.03;
+    renderer.render(scene, camera);
+  }
+  anim();
+}
+
+// ============ PROCESS 3D ============
+function initProcessCanvas() {
+  const canvas = document.getElementById('process-canvas');
+  if (!canvas) return;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.setClearColor(0x1a1208, 1);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.1, 100);
+  camera.position.set(0, 2.5, 5);
+  camera.lookAt(0, 1, 0);
+
+  scene.add(new THREE.AmbientLight(0x3d2510, 2));
+  const sp = new THREE.SpotLight(0xc8a96e, 5, 20, Math.PI/5, 0.5);
+  sp.position.set(3, 8, 5); sp.castShadow = true;
+  scene.add(sp);
+  scene.add(new THREE.PointLight(0xe8d5a0, 2, 10));
+
+  const w = new THREE.MeshPhongMaterial({ color: 0x6b3d1e, shininess: 50, specular: 0x4a2810 });
+  const d = new THREE.MeshPhongMaterial({ color: 0x2d150a, shininess: 20 });
+  const g = new THREE.MeshPhongMaterial({ color: 0xc8a96e, shininess: 120, specular: 0xffd080 });
+
+  // Elaborate furniture piece - ornate cabinet
+  const cab = new THREE.Group();
+  // Body
+  cab.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.6, 0.8), w), { position: new THREE.Vector3(0, 0.8, 0) }));
+  // Top crown
+  cab.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 1.0), d), { position: new THREE.Vector3(0, 1.66, 0) }));
+  // Base
+  cab.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.12, 0.9), d), { position: new THREE.Vector3(0, 0.06, 0) }));
+  // Doors (2)
+  [-0.56, 0.56].forEach(x => {
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.4, 0.06), w);
+    door.position.set(x, 0.8, 0.43); cab.add(door);
+    // Door panel inset
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.76, 1.1, 0.03), d);
+    panel.position.set(x, 0.8, 0.46); cab.add(panel);
+    // Door handle
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.12), g);
+    handle.rotation.z = Math.PI / 2;
+    handle.position.set(x > 0 ? x - 0.28 : x + 0.28, 0.8, 0.5); cab.add(handle);
+  });
+  // Vertical divider
+  cab.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.4, 0.06), d), { position: new THREE.Vector3(0, 0.8, 0.43) }));
+  // Corner details
+  [[-1.1, 1.1], [1.1, 1.1], [-1.1, -0.2], [1.1, -0.2]].forEach(([x, y]) => {
+    const corner = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.86), g);
+    corner.position.set(x, y, 0); cab.add(corner);
+  });
+  scene.add(cab);
+
+  // Wood dust particles
+  const dustGeo = new THREE.BufferGeometry();
+  const dustPos = new Float32Array(200 * 3);
+  for (let i = 0; i < 200 * 3; i++) dustPos[i] = (Math.random() - 0.5) * 6;
+  dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+  const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xc8a96e, size: 0.025, transparent: true, opacity: 0.4 }));
+  scene.add(dust);
+
+  let tp = 0;
+  function animP() {
+    requestAnimationFrame(animP);
+    tp += 0.005;
+    cab.rotation.y = tp * 0.3;
+    cab.position.y = Math.sin(tp * 0.7) * 0.04;
+    dust.rotation.y = tp * 0.1;
+    renderer.render(scene, camera);
+  }
+  animP();
+}
+
+// ============ SCROLL ANIMATIONS ============
+function initAnimations() {
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Hero
+  gsap.to('.hero-eyebrow', { opacity: 1, y: 0, duration: 1.0, delay: 0.2, ease: 'power3.out' });
+  gsap.to('.hero-title', { opacity: 1, y: 0, duration: 1.2, delay: 0.5, ease: 'power3.out' });
+  gsap.to('.hero-desc', { opacity: 1, y: 0, duration: 1.0, delay: 0.8, ease: 'power3.out' });
+  gsap.to('.hero-cta', { opacity: 1, y: 0, duration: 0.8, delay: 1.1, ease: 'power3.out' });
+  gsap.to('#scrollInd', { opacity: 1, duration: 0.8, delay: 1.8 });
+
+  // Stats counter
+  gsap.to('.stat-item', {
+    opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: 'power3.out',
+    scrollTrigger: { trigger: '#stats', start: 'top 85%' }
+  });
+  document.querySelectorAll('.stat-num').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    ScrollTrigger.create({
+      trigger: '#stats', start: 'top 85%',
+      onEnter: () => {
+        let current = 0;
+        const step = target / 60;
+        const interval = setInterval(() => {
+          current += step;
+          if (current >= target) { current = target; clearInterval(interval); }
+          el.textContent = target >= 1000 ? Math.floor(current).toLocaleString() : Math.floor(current);
+        }, 25);
+      }
+    });
+  });
+
+  // Products
+  gsap.to('.product-card', {
+    opacity: 1, y: 0, duration: 0.9, stagger: 0.15, ease: 'power3.out',
+    scrollTrigger: { trigger: '#products', start: 'top 75%' }
+  });
+
+  // Process steps
+  gsap.to('.process-step', {
+    opacity: 1, x: 0, duration: 0.8, stagger: 0.12, ease: 'power3.out',
+    scrollTrigger: { trigger: '#process', start: 'top 70%' }
+  });
+
+  // Materials
+  gsap.to('.material-card', {
+    opacity: 1, y: 0, duration: 0.8, stagger: 0.1, ease: 'power3.out',
+    scrollTrigger: { trigger: '#materials', start: 'top 75%' }
+  });
+
+  // Quote
+  gsap.to('.quote-text', {
+    opacity: 1, y: 0, duration: 1.2, ease: 'power3.out',
+    scrollTrigger: { trigger: '#quote', start: 'top 75%' }
+  });
+  gsap.to('.quote-author', {
+    opacity: 1, duration: 0.8, delay: 0.4,
+    scrollTrigger: { trigger: '#quote', start: 'top 75%' }
+  });
+
+  // Parallax on hero
+  gsap.to('#canvas-container', {
+    y: '30%',
+    ease: 'none',
+    scrollTrigger: {
+      trigger: '#hero',
+      start: 'top top',
+      end: 'bottom top',
+      scrub: true
+    }
+  });
+
+  // Init all 3D scenes
+  initHero();
+  initProductCanvas('chair-canvas', 'chair');
+  initProductCanvas('table-canvas', 'table');
+  initProductCanvas('shelf-canvas', 'shelf');
+  initProcessCanvas();
+}
+</script>
+</body>
+</html>
